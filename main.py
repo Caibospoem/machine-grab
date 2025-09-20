@@ -26,6 +26,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pbSave.clicked.connect(self.on_save_clicked)
         self.TestAction.triggered.connect(self.on_findModel_clicked)
         self.pbCreateModel.clicked.connect(self.on_createModel_clicked)
+        self.pbCreateModel2.clicked.connect(self.on_createModel2_clicked)
+        self.pbCreateModel3.clicked.connect(self.on_createModel3_clicked)
         self.pbStartTcp.clicked.connect(self.on_startTcp_clicked)
         self.calibAction.triggered.connect(self.on_calib_clicked)
         self.haWindow.roiChanged.connect(self.on_roi_changed)
@@ -35,6 +37,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tcp_worker = None
         self.cameraHandle = None
         self.camera_worker = None
+        self.shapeId=1
 
     def on_save_clicked(self):
         if self.haWindow.h_image is not None:
@@ -143,13 +146,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def on_received_command(self, command):
         print(command)
         rest = self.process()
+        strrest = ""
         for i in range(len(rest)):
-            row =rest[i][0]
-            col =rest[i][1]
-            ha.affine_trans_point_2d(self.modelData.matrix, row, col)
-            
+            row =rest[i][2]
+            col =rest[i][3]
+            id = rest[i][0]
+            y,x= ha.affine_trans_point_2d(self.modelData.matrix, row, col)
+            if(len(x)>0 and len(y)>0):
+                strrest = strrest + f"{rest[i][0]},{rest[i][1]},{x[0]:.2f},{y[0]:.2f},{rest[i][4]:.2f},"
+
         if rest is not None:
-            self.tcp_worker.send_response(",".join(map(str,rest)))
+            self.tcp_worker.send_response(strrest)
 
     def closeEvent(self, event):
        
@@ -178,17 +185,51 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             event.ignore()  # Cancel closing
     def process(self):
         if self.haWindow.h_image is not None and self.runData.modelId is not None:
-                row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId, -0.39, 7, 0.5, 0, 0.5, "least_squares", 2, 0.9)
-                if(len(row) == 0):
-                    return
                 tempPoints=[]
-                for i in range(len(row)):
-                    self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f}","image", row[i],col[i]+20,"black",[],[])
-                    tempPoints.append([row[i],col[i],angle[i]])
+                h=None
+                color=0
+                if(ha.count_channels(self.haWindow.h_image)[0]>1):
+                    r,g,b = ha.decompose3(self.haWindow.h_image)
+                    h,s,v = ha.trans_from_rgb(r,g,b,"hsv")
+                if self.runData.modelId!=None:
+                    row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId, -0.39, 7, 0.5, 0, 0.5, "least_squares", 2, 0.9)
+                    for i in range(len(row)):
+                        self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f}","image", row[i],col[i]+20,"black",[],[])
+                        if(h!=None):
+                           region =  ha.gen_circle(row[i],col[i],10)
+                           color = self.get_color(region,h,row[i],col[i])
+                           
+                        tempPoints.append([0,color,row[i],col[i],angle[i]])
+                if self.runData.modelId2!=None:
+                    row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId2, -0.39, 7, 0.5, 0, 0.5, "least_squares", 2, 0.9)
+                    for i in range(len(row)):
+                        self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f}","image", row[i],col[i]+20,"black",[],[])
+                        if(h!=None):
+                           region =  ha.gen_circle(row[i],col[i],10)
+                           color = self.get_color(region,h,row[i],col[i])
+                        tempPoints.append([1,color,row[i],col[i],angle[i]])
+                if self.runData.modelId3!=None:
+                    row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId3, -0.39, 7, 0.5, 0, 0.5, "least_squares", 2, 0.9)
+                    for i in range(len(row)):
+                        self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f}","image", row[i],col[i]+20,"black",[],[])
+                        if(h!=None):
+                           region =  ha.gen_circle(row[i],col[i],10)
+                           color = self.get_color(region,h,row[i],col[i])
+                        tempPoints.append([2,color,row[i],col[i],angle[i]])
                 return tempPoints
                     
 
-
+    def get_color(self,region ,image,row,col):
+        mean, _ = ha.intensity(region,image)
+        if(mean[0]>200):
+            self.haWindow.disp_text(f"红色","image", row+20,col,"black",[],[])
+            return 0 # 红色
+        elif(mean[0]>100):
+            self.haWindow.disp_text(f"绿色","image", row+20,col,"black",[],[])
+            return 1 # 绿色
+        else:
+            self.haWindow.disp_text(f"蓝色","image", row+20,col,"black",[],[])
+            return 2 # 蓝色
     def on_Read_clicked(self):
         # 打开文件对话框，选择图像文件
         file_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Image Files (*.png *.jpg *.bmp);;All Files (*)")
@@ -196,7 +237,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # 使用 HalconView 显示图像
             self.haWindow.clear()
             self.haWindow.load_image(file_path)
-            self.process()
+            #self.process()
                 
 
     
@@ -212,8 +253,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 region =ha.gen_rectangle2(roiParam[0]['row'],roiParam[0]['column'],roiParam[0]['phi'],roiParam[0]['length1'],roiParam[0]['length2'])  
                 _, rowCenter,colCenter=ha.area_center(region)         
                 modelImage=ha.reduce_domain(self.haWindow.h_image,region)
-                self.runData.modelId = ha.create_shape_model(modelImage,"auto", 0, 7, "auto", "auto", 'use_polarity', "auto", "auto")
-                contour = ha.get_shape_model_contours(self.runData.modelId, 1 )
+                
+                modelId = ha.create_shape_model(modelImage,"auto", 0, 7, "auto", "auto", 'use_polarity', "auto", "auto")
+                contour = ha.get_shape_model_contours(modelId, 1 )
+                if(self.shapeId==1):
+                    self.runData.modelId=modelId
+                elif(self.shapeId==2):
+                    self.runData.modelId2=modelId
+                elif(self.shapeId==3):
+                    self.runData.modelId3=modelId
 
                 hom = ha.vector_angle_to_rigid(0, 0, 0, rowCenter, colCenter, 0)
                 self.runData.baseRow=rowCenter
@@ -229,8 +277,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def on_createModel_clicked(self):
         self.createFlg="shape"
         self.haWindow.clear()
-        self.haWindow.add_rectangle2(row=100, col=100, phi=0, length1=50, length2=50, color="red")        
-            
+        self.shapeId=1
+        self.haWindow.add_rectangle2(row=100, col=100, phi=0, length1=50, length2=50, color="red")    
+    def on_createModel2_clicked(self):
+        self.createFlg="shape"
+        self.haWindow.clear()
+        self.shapeId=2
+        self.haWindow.add_rectangle2(row=100, col=100, phi=0, length1=50, length2=50, color="red")
+
+    def on_createModel3_clicked(self):
+        self.createFlg="shape"
+        self.haWindow.clear()
+        self.shapeId=3
+        self.haWindow.add_rectangle2(row=100, col=100, phi=0, length1=50, length2=50, color="red")
+
     def on_findModel_clicked(self):
         # 处理查找模型的逻辑
         self.process()

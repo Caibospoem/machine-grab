@@ -6,6 +6,8 @@ class runData():
         """Initialize the object with default values."""
         # 定位模型
         self.modelId = None 
+        self.modelId2 = None
+        self.modelId3 = None
         #找圆模型 
         self.lineId = None
         #转换矩阵
@@ -55,6 +57,10 @@ class runData():
             ha.write_metrology_model(self.lineId,"run_metrology_model.hdml")
         if(self.modelId!=None):
             ha.write_shape_model(self.modelId,"run_shape_model.hmod")
+        if(self.modelId2!=None):
+            ha.write_shape_model(self.modelId2,"run_shape_model2.hmod")
+        if(self.modelId3!=None):
+            ha.write_shape_model(self.modelId3,"run_shape_model3.hmod")
         
 
     @staticmethod
@@ -68,4 +74,8 @@ class runData():
             modelData.lineId = ha.read_metrology_model("run_metrology_model.hdml")
         if( ha.file_exists("run_shape_model.hmod")):
             modelData.modelId = ha.read_shape_model("run_shape_model.hmod")
+        if( ha.file_exists("run_shape_model2.hmod")):
+            modelData.modelId2 = ha.read_shape_model("run_shape_model2.hmod")
+        if( ha.file_exists("run_shape_model3.hmod")):
+            modelData.modelId3 = ha.read_shape_model("run_shape_model3.hmod")
         return modelData

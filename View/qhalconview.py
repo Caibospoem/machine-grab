@@ -99,7 +99,7 @@ class QHalconView(QtWidgets.QWidget):
         if self.h_window:
             ha.clear_window(self.h_window)
             if self.h_image:
-                ha.disp_image(self.h_image, self.h_window)
+                ha.disp_color(self.h_image, self.h_window)
 
     def fit_to_window(self):
         """自适应到控件显示区域"""
@@ -343,7 +343,7 @@ class QHalconView(QtWidgets.QWidget):
             return
         # 设置 part 并显示
         ha.set_part(self.h_window, *self.part)
-        ha.disp_image( self.h_image,self.h_window)
+        ha.disp_color( self.h_image,self.h_window)
 
     def _refresh(self):
         # 周期性重绘，保持 DrawingObject 的显示与窗口一致
