@@ -11,6 +11,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import QThread
 from TCPServerThread import TCPServerWorker
 from calib import CalibWindow
+from cameraWorker import CameraWorker
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -18,7 +19,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Setup the UI components
         self.setupUi(self)
         # Connect signals and slots (optional)
+        self.pbOpen.clicked.connect(self.on_open_clicked)
         self.pBRead.clicked.connect(self.on_Read_clicked)
+        self.pbStop.clicked.connect(self.on_stop_clicked)
+        self.cbReal.stateChanged.connect(self.on_real_clicked)
 
         self.TestAction.triggered.connect(self.on_findModel_clicked)
         self.pbCreateModel.clicked.connect(self.on_createModel_clicked)
@@ -29,8 +33,74 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.runData=rd.runData.load("run_data_backup.json")
         self.modelData=md.ModelData.load("model_data_backup.json")
         self.tcp_worker = None
+        self.cameraHandle = None
+        self.camera_worker = None
 
 
+    def on_open_clicked(self):
+         self.cameraHandle = ha.open_framegrabber("MVision", 1, 1, 0, 0, 0, 0, "progressive", 8, "default", -1, "false", "auto", "GEV:DA6028740 cam02", 0, -1)
+         self.pbOpen.setEnabled(False)
+         self.cbReal.setEnabled(True)
+         
+    def on_stop_clicked(self):
+        if self.cameraHandle is not None:
+            ha.close_framegrabber(self.cameraHandle)
+        self.pbOpen.setEnabled(True)
+        self.cbReal.setEnabled(False)
+    def on_real_clicked(self,state):
+        if state == 2:
+            self.start_camera_thread()
+        else:
+            self.stop_camera_thread()
+
+    def start_camera_thread(self):
+        # 如果已经有摄像头线程在运行，先停止它
+        if self.camera_worker is not None:
+            self.stop_camera_thread()
+        
+        # 确保摄像头已经打开
+        if self.cameraHandle is None:
+            self.on_open_clicked()
+            
+            if self.cameraHandle is None:
+                QMessageBox.warning(self, "Warning", "Failed to open camera. Please check camera connection.")
+                self.cbReal.setChecked(False)
+                return
+        self.camera_worker = CameraWorker(self.cameraHandle)
+        # 创建摄像头线程和工作对象
+        self.camera_thread = QThread()
+        
+        
+        # 将Worker移动到线程中
+        self.camera_worker.moveToThread(self.camera_thread)
+        
+        # 连接信号与槽
+        self.camera_thread.started.connect(self.camera_worker.run)
+        self.camera_worker.image_ready.connect(self.process_camera_image)
+        self.camera_worker.error_occurred.connect(self.handle_camera_error)
+        self.camera_worker.destroyed.connect(self.camera_thread.quit)
+        self.camera_thread.finished.connect(self.camera_thread.deleteLater)
+        
+        # 启动线程
+        self.camera_thread.start()
+
+    def process_camera_image(self, image):
+        self.haWindow.set_image(image)
+        self.haWindow.update()
+    def handle_camera_error(self, error_message):
+        QMessageBox.critical(self, "Camera Error", error_message)
+        self.stop_camera_thread()
+        self.cbReal.setChecked(False)
+    def stop_camera_thread(self):
+        if self.camera_worker is not None:
+            if self.camera_worker.running:
+                self.camera_worker.stop()
+            self.camera_worker = None
+            # 确保线程完全停止
+            if self.camera_thread is not None:
+                self.camera_thread.quit()
+                self.camera_thread.wait(1000)
+                self.camera_thread = None
     def on_calib_clicked(self):
         
         self.calibWindow = CalibWindow()  # Create an instance of the CalibWindow class

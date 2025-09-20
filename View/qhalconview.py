@@ -85,7 +85,7 @@ class QHalconView(QtWidgets.QWidget):
         self._ensure_window()
         self.h_image = h_image
         w, h = ha.get_image_size(self.h_image)
-        self.img_w, self.img_h = int(w), int(h)
+        self.img_w, self.img_h = int(w[0]), int(h[0])
         self._fit_part()
         self._disp()
 

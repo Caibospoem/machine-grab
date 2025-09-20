@@ -29,20 +29,27 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_2">
            <item>
-            <widget class="QPushButton" name="pushButton_2">
+            <widget class="QPushButton" name="pbOpen">
              <property name="text">
-              <string>开始采集</string>
+              <string>打开设备</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton">
+            <widget class="QPushButton" name="pbStop">
              <property name="text">
-              <string>停止采集</string>
+              <string>停止设备</string>
              </property>
             </widget>
            </item>
           </layout>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="cbReal">
+           <property name="text">
+            <string>实时采集</string>
+           </property>
+          </widget>
          </item>
          <item>
           <widget class="QPushButton" name="pBRead">
