@@ -23,7 +23,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pBRead.clicked.connect(self.on_Read_clicked)
         self.pbStop.clicked.connect(self.on_stop_clicked)
         self.cbReal.stateChanged.connect(self.on_real_clicked)
-
+        self.pbSave.clicked.connect(self.on_save_clicked)
         self.TestAction.triggered.connect(self.on_findModel_clicked)
         self.pbCreateModel.clicked.connect(self.on_createModel_clicked)
         self.pbStartTcp.clicked.connect(self.on_startTcp_clicked)
@@ -36,6 +36,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.cameraHandle = None
         self.camera_worker = None
 
+    def on_save_clicked(self):
+        if self.haWindow.h_image is not None:
+            file_name, _ = QFileDialog.getSaveFileName(self, "Save Image", "", "Images (*.png *.jpg *.bmp)")
+            if file_name:
+                ha.write_image(self.haWindow.h_image, "bmp",0, file_name)
+                QMessageBox.information(self, "Success", "Image saved successfully.")
+        else:
+            QMessageBox.warning(self, "Warning", "No image to save.")
 
     def on_open_clicked(self):
          self.cameraHandle = ha.open_framegrabber("MVision", 1, 1, 0, 0, 0, 0, "progressive", 8, "default", -1, "false", "auto", "GEV:DA6028740 cam02", 0, -1)
