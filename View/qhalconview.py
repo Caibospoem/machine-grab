@@ -225,7 +225,7 @@ class QHalconView(QtWidgets.QWidget):
             return
         delta = event.angleDelta().y()
         factor = 1.25 if delta > 0 else (1 / 1.25)
-        self.zoom(factor, event.pos())
+        #self.zoom(factor, event.pos())
 
     def mousePressEvent(self, event):
         if event.button() in (QtCore.Qt.MiddleButton, QtCore.Qt.RightButton):
@@ -291,7 +291,8 @@ class QHalconView(QtWidgets.QWidget):
         view_w = max(1, self.width())
         view_h = max(1, self.height())
         img_w, img_h = self.img_w, self.img_h
-
+        if(img_w == 0 or img_h == 0):
+            return
         # 以较短边匹配控件，保持比例
         img_aspect = img_w / img_h
         view_aspect = view_w / view_h
@@ -338,8 +339,10 @@ class QHalconView(QtWidgets.QWidget):
     def _disp(self, clear=False):
         if not self.h_window:
             return
+        ha.clear_window(self.h_window)
         if clear or not self.h_image:
             # 清空：用一个空的灰底显示（可选）
+            
             return
         # 设置 part 并显示
         ha.set_part(self.h_window, *self.part)
