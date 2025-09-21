@@ -49,7 +49,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self, "Warning", "No image to save.")
 
     def on_open_clicked(self):
-         self.cameraHandle = ha.open_framegrabber("MVision", 1, 1, 0, 0, 0, 0, "progressive", 8, "default", -1, "false", "auto", "GEV:DA6028740 cam02", 0, -1)
+         self.cameraHandle = ha.open_framegrabber("MVision", 1, 1, 0, 0, 0, 0, "progressive", 8, "default", -1, "false", "auto", "GEV:DA7209084", 0, -1)
          self.pbOpen.setEnabled(False)
          self.cbReal.setEnabled(True)
          
@@ -145,9 +145,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def on_received_command(self, command):
         print(command)
+        image = ha.grab_image(self.cameraHandle)
+        self.haWindow.set_image(image)
+        self.haWindow.update()
         rest = self.process()
         strrest = ""
-        for i in range(len(rest)):
+        for i in range(1):
             row =rest[i][2]
             col =rest[i][3]
             id = rest[i][0]
@@ -156,6 +159,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 strrest = strrest + f"{rest[i][0]},{rest[i][1]},{x[0]:.2f},{y[0]:.2f},{rest[i][4]:.2f},"
 
         if rest is not None:
+            print(strrest)
             self.tcp_worker.send_response(strrest)
 
     def closeEvent(self, event):
@@ -192,7 +196,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     r,g,b = ha.decompose3(self.haWindow.h_image)
                     h,s,v = ha.trans_from_rgb(r,g,b,"hsv")
                 if self.runData.modelId!=None:
-                    row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId, -0.39, 7, 0.5, 0, 0.5, "least_squares", 2, 0.9)
+                    row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId, -0.39, 7, 0.5, 1, 0.5, "least_squares", 2, 0.9)
                     for i in range(len(row)):
                         self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f}","image", row[i],col[i]+20,"black",[],[])
                         if(h!=None):
@@ -200,22 +204,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                            color = self.get_color(region,h,row[i],col[i])
                            
                         tempPoints.append([0,color,row[i],col[i],angle[i]])
-                if self.runData.modelId2!=None:
-                    row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId2, -0.39, 7, 0.5, 0, 0.5, "least_squares", 2, 0.9)
-                    for i in range(len(row)):
-                        self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f}","image", row[i],col[i]+20,"black",[],[])
-                        if(h!=None):
-                           region =  ha.gen_circle(row[i],col[i],10)
-                           color = self.get_color(region,h,row[i],col[i])
-                        tempPoints.append([1,color,row[i],col[i],angle[i]])
-                if self.runData.modelId3!=None:
-                    row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId3, -0.39, 7, 0.5, 0, 0.5, "least_squares", 2, 0.9)
-                    for i in range(len(row)):
-                        self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f}","image", row[i],col[i]+20,"black",[],[])
-                        if(h!=None):
-                           region =  ha.gen_circle(row[i],col[i],10)
-                           color = self.get_color(region,h,row[i],col[i])
-                        tempPoints.append([2,color,row[i],col[i],angle[i]])
+                # if self.runData.modelId2!=None:
+                #     row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId2, -0.39, 7, 0.5, 0, 0.5, "least_squares", 2, 0.9)
+                #     for i in range(len(row)):
+                #         self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f}","image", row[i],col[i]+20,"black",[],[])
+                #         if(h!=None):
+                #            region =  ha.gen_circle(row[i],col[i],10)
+                #            color = self.get_color(region,h,row[i],col[i])
+                #         tempPoints.append([1,color,row[i],col[i],angle[i]])
+                # if self.runData.modelId3!=None:
+                #     row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId3, -0.39, 7, 0.5, 0, 0.5, "least_squares", 2, 0.9)
+                #     for i in range(len(row)):
+                #         self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f}","image", row[i],col[i]+20,"black",[],[])
+                #         if(h!=None):
+                #            region =  ha.gen_circle(row[i],col[i],10)
+                #            color = self.get_color(region,h,row[i],col[i])
+                #         tempPoints.append([2,color,row[i],col[i],angle[i]])
                 return tempPoints
                     
 

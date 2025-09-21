@@ -51,9 +51,9 @@ class TCPServerWorker(QObject):
                 if message.lower() == "exit":
                     client_socket.send("服务器已结束连接。".encode('utf-8'))
                     break
-                else:
+                #else:
                     # 回传确认信息（可选）
-                    client_socket.send(f"已收到: {message}".encode('utf-8'))
+                    #client_socket.send(f"已收到: {message}".encode('utf-8'))
         except Exception as e:
             print(f"客户端通信错误: {e}")
         finally:

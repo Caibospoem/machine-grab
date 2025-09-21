@@ -128,7 +128,10 @@ class CalibWindow(QDialog, Ui_calibWindow):
             except: pass
             
     def on_calculate_clicked(self):
-       
+        self.modelData.robotx.clear()
+        self.modelData.roboty.clear()
+        self.modelData.rowPoints.clear()
+        self.modelData.colPoints.clear()
         for i in range(self.robotModel.rowCount()):
             row = self.robotModel.item(i,1).text()
             col = self.robotModel.item(i,2).text()
