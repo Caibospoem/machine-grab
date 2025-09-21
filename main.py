@@ -12,6 +12,7 @@ from PyQt5.QtCore import QThread
 from TCPServerThread import TCPServerWorker
 from calib import CalibWindow
 from cameraWorker import CameraWorker
+import os
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -32,8 +33,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.calibAction.triggered.connect(self.on_calib_clicked)
         self.haWindow.roiChanged.connect(self.on_roi_changed)
         self.ImagePoints = []
-        self.runData=rd.runData.load("run_data_backup.json")
-        self.modelData=md.ModelData.load("model_data_backup.json")
+        self.runData=rd.runData.load("param/run_data_backup.json")
+        self.modelData=md.ModelData.load("param/model_data_backup.json")
+        self.leColorName1.setText(self.runData.colorName1)
+        self.leColorName2.setText(self.runData.colorName2)
+        self.leColorName3.setText(self.runData.colorName3)
+        self.spColorMin1.setValue(self.runData.colorMin1)
+        self.spColorMax1.setValue(self.runData.colorMax1)
+        self.spColorMin2.setValue(self.runData.colorMin2)
+        self.spColorMax2.setValue(self.runData.colorMax2)
+        self.spColorMin3.setValue(self.runData.colorMin3)
+        self.spColorMax3.setValue(self.runData.colorMax3)
+
         self.tcp_worker = None
         self.cameraHandle = None
         self.camera_worker = None
@@ -162,8 +173,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             print(strrest)
             self.tcp_worker.send_response(strrest)
 
+    def ensure_param_directory(self):
+        """确保param文件夹存在"""
+        param_dir = "param"
+        if not os.path.exists(param_dir):
+            os.makedirs(param_dir)
+            print(f"Created missing directory: {param_dir}")
     def closeEvent(self, event):
-       
+        self.ensure_param_directory()
         """
         Handle the window close event.
         """
@@ -179,8 +196,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if reply == QMessageBox.Yes:
             # Save modelData state before closing
             try:
+                
                 #self.modelData.save("model_data_backup.json")  # Replace with your desired path
-                self.runData.save("run_data_backup.json")
+                self.runData.colorName1=self.leColorName1.text()
+                self.runData.colorName2=self.leColorName2.text()
+                self.runData.colorName3=self.leColorName3.text()
+                self.runData.colorMin1=self.spColorMin1.value()
+                self.runData.colorMax1=self.spColorMax1.value()
+                self.runData.colorMin2=self.spColorMin2.value()
+                self.runData.colorMax2=self.spColorMax2.value()
+                self.runData.colorMin3=self.spColorMin3.value()
+                self.runData.colorMax3=self.spColorMax3.value()
+                self.runData.save("param/run_data_backup.json")
                 event.accept()  # Proceed with closing
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to save data: {str(e)}")
@@ -225,14 +252,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def get_color(self,region ,image,row,col):
         mean, _ = ha.intensity(region,image)
-        if(mean[0]>200):
-            self.haWindow.disp_text(f"红色","image", row+20,col,"black",[],[])
+        if(mean[0]>self.spColorMin1.value() and mean[0]<self.spColorMax1.value()):
+            self.haWindow.disp_text(f"{self.leColorName1.text()},{mean[0]}","image", row+20,col,"black",[],[])
             return 0 # 红色
-        elif(mean[0]>100):
-            self.haWindow.disp_text(f"绿色","image", row+20,col,"black",[],[])
+        elif(mean[0]>self.spColorMin2.value() and mean[0]<self.spColorMax2.value()):
+            self.haWindow.disp_text(f"{self.leColorName2.text()},{mean[0]}","image", row+20,col,"black",[],[])
             return 1 # 绿色
         else:
-            self.haWindow.disp_text(f"蓝色","image", row+20,col,"black",[],[])
+            self.haWindow.disp_text(f"{self.leColorName3.text()},{mean[0]}","image", row+20,col,"black",[],[])
             return 2 # 蓝色
     def on_Read_clicked(self):
         # 打开文件对话框，选择图像文件

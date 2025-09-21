@@ -31,7 +31,7 @@ class CalibWindow(QDialog, Ui_calibWindow):
         self.ImagePoints = []
 
     def closeEvent(self, event):
-        self.modelData.save("model_data_backup.json")
+        self.modelData.save("param/model_data_backup.json")
     def on_write_clicked(self):
         self.robotModel.removeRows(0,self.robotModel.rowCount())
         id = 0

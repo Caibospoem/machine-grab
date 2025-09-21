@@ -22,6 +22,16 @@ class runData():
         self.baseRow = None
         self.baseCol = None
 
+        self.colorName1="红色"
+        self.colorName2="绿色"
+        self.colorName3="蓝色"
+        self.colorMin1=0
+        self.colorMax1=255
+        self.colorMin2=0
+        self.colorMax2=255
+        self.colorMin3=0
+        self.colorMax3=255
+
     def to_dict(self):
         """Convert the object to a dictionary."""
         return {
@@ -31,7 +41,16 @@ class runData():
             "rowPoints": self.rowPoints,
             "colPoints": self.colPoints,
             "robotx": self.robotx,
-            "roboty": self.roboty
+            "roboty": self.roboty,
+            "colorName1": self.colorName1,
+            "colorName2": self.colorName2,  
+            "colorName3": self.colorName3,
+            "colorMin1": self.colorMin1,
+            "colorMax1": self.colorMax1,
+            "colorMin2": self.colorMin2,
+            "colorMax2": self.colorMax2,
+            "colorMin3": self.colorMin3,
+            "colorMax3": self.colorMax3,
         }
 
     @classmethod
@@ -47,6 +66,15 @@ class runData():
         instance.roboty = data.get("roboty")
         if(len(instance.rowPoints)==9 and len(instance.colPoints)==9 and len(instance.robotx)==9 and len(instance.roboty)==9):
             instance.matrix = ha.vector_to_hom_mat2d(instance.rowPoints,instance.colPoints,instance.roboty,instance.robotx)
+        instance.colorName1 = data.get("colorName1")
+        instance.colorName2 = data.get("colorName2")
+        instance.colorName3 = data.get("colorName3")
+        instance.colorMin1 = data.get("colorMin1")
+        instance.colorMax1 = data.get("colorMax1")
+        instance.colorMin2 = data.get("colorMin2")
+        instance.colorMax2 = data.get("colorMax2")
+        instance.colorMin3 = data.get("colorMin3")
+        instance.colorMax3 = data.get("colorMax3")
         return instance
 
     def save(self, file_path):

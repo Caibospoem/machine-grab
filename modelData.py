@@ -20,6 +20,8 @@ class ModelData:
         self.baseRow = None
         self.baseCol = None
 
+
+
     def to_dict(self):
         """Convert the object to a dictionary."""
         return {
@@ -29,7 +31,9 @@ class ModelData:
             "rowPoints": self.rowPoints,
             "colPoints": self.colPoints,
             "robotx": self.robotx,
-            "roboty": self.roboty
+            "roboty": self.roboty,
+            
+            
         }
 
     @classmethod
@@ -44,6 +48,7 @@ class ModelData:
         instance.robotx = data.get("robotx")
         instance.roboty = data.get("roboty")
         instance.matrix = ha.vector_to_hom_mat2d(instance.rowPoints,instance.colPoints,instance.roboty,instance.robotx)
+        
         return instance
 
     def save(self, file_path):

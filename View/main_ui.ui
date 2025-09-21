@@ -72,51 +72,213 @@
        </widget>
       </item>
       <item>
-       <widget class="QGroupBox" name="groupBox_6">
+       <layout class="QHBoxLayout" name="horizontalLayout_3"/>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="groupBox_2">
         <property name="title">
-         <string>标定参数</string>
+         <string>定位设置</string>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <item>
-          <widget class="QGroupBox" name="groupBox_2">
-           <property name="title">
-            <string>定位设置</string>
+        <layout class="QGridLayout" name="gridLayout" columnstretch="1,1">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>查找数量</string>
            </property>
-           <layout class="QGridLayout" name="gridLayout" columnstretch="1,1">
-            <item row="0" column="0">
-             <widget class="QLabel" name="label">
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QPushButton" name="pbCreateModel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>创建模型1</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QSpinBox" name="spinBox"/>
+         </item>
+         <item row="2" column="1">
+          <widget class="QPushButton" name="pbCreateModel2">
+           <property name="text">
+            <string>创建模型2</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QPushButton" name="pbCreateModel3">
+           <property name="text">
+            <string>创建模型3</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="groupBox_3">
+        <property name="title">
+         <string>颜色设置</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2" columnstretch="1,0,0,0,0,0">
+         <item row="5" column="0">
+          <widget class="QLabel" name="label_10">
+           <property name="text">
+            <string>颜色名称3</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QWidget" name="widget" native="true">
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QLabel" name="label_6">
               <property name="text">
-               <string>查找数量</string>
+               <string>上限</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
-             <widget class="QPushButton" name="pbCreateModel">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
+            <item>
+             <widget class="QSpinBox" name="spColorMax1">
+              <property name="maximum">
+               <number>255</number>
               </property>
-              <property name="text">
-               <string>创建模型1</string>
+              <property name="value">
+               <number>255</number>
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
-             <widget class="QSpinBox" name="spinBox"/>
-            </item>
-            <item row="2" column="1">
-             <widget class="QPushButton" name="pbCreateModel2">
+           </layout>
+          </widget>
+         </item>
+         <item row="4" column="2">
+          <widget class="QWidget" name="widget_4" native="true">
+           <layout class="QHBoxLayout" name="horizontalLayout_8">
+            <item>
+             <widget class="QLabel" name="label_9">
               <property name="text">
-               <string>创建模型2</string>
+               <string>上限</string>
               </property>
              </widget>
             </item>
-            <item row="3" column="1">
-             <widget class="QPushButton" name="pbCreateModel3">
+            <item>
+             <widget class="QSpinBox" name="spColorMax2">
+              <property name="maximum">
+               <number>255</number>
+              </property>
+              <property name="value">
+               <number>255</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>颜色2名称</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <widget class="QLineEdit" name="leColorName2"/>
+         </item>
+         <item row="4" column="0">
+          <widget class="QWidget" name="widget_3" native="true">
+           <layout class="QHBoxLayout" name="horizontalLayout_7">
+            <item>
+             <widget class="QLabel" name="label_8">
               <property name="text">
-               <string>创建模型3</string>
+               <string>下限</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="spColorMin2">
+              <property name="maximum">
+               <number>255</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>颜色1名称</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLineEdit" name="leColorName1"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QWidget" name="widget_2" native="true">
+           <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <item>
+             <widget class="QLabel" name="label_5">
+              <property name="text">
+               <string>下限</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="spColorMin1">
+              <property name="maximum">
+               <number>255</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="5" column="2">
+          <widget class="QLineEdit" name="leColorName3"/>
+         </item>
+         <item row="6" column="0">
+          <widget class="QWidget" name="widget_5" native="true">
+           <layout class="QHBoxLayout" name="horizontalLayout_9">
+            <item>
+             <widget class="QLabel" name="label_11">
+              <property name="text">
+               <string>下限</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="spColorMin3">
+              <property name="maximum">
+               <number>255</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="6" column="2">
+          <widget class="QWidget" name="widget_6" native="true">
+           <layout class="QHBoxLayout" name="horizontalLayout_10">
+            <item>
+             <widget class="QLabel" name="label_12">
+              <property name="text">
+               <string>上限</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="spColorMax3">
+              <property name="maximum">
+               <number>255</number>
+              </property>
+              <property name="value">
+               <number>255</number>
               </property>
              </widget>
             </item>
@@ -124,17 +286,6 @@
           </widget>
          </item>
         </layout>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3"/>
-      </item>
-      <item>
-       <widget class="QGroupBox" name="groupBox_4">
-        <property name="title">
-         <string/>
-        </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_4"/>
        </widget>
       </item>
       <item>
