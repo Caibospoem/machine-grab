@@ -266,53 +266,53 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             event.ignore()  # Cancel closing
     def process(self):
-        if self.haWindow.h_image is not None and self.runData.modelId is not None:
+        if self.haWindow.h_image is not None and (
+                self.runData.modelId is not None or self.runData.modelId2 is not None or self.runData.modelId3 is not None or
+                self.runData.modelId4 is not None or self.runData.modelId5 is not None):
                 tempPoints=[]
-                h=None
+                h = s = v = None
                 color=0
                 if(ha.count_channels(self.haWindow.h_image)[0]>1):
                     r,g,b = ha.decompose3(self.haWindow.h_image)
                     h,s,v = ha.trans_from_rgb(r,g,b,"hsv")
+                else:
+                    # grayscale camera: treat as V channel
+                    v = self.haWindow.h_image
                 if self.runData.modelId!=None:
                     row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId, -0.39, 7, 0.7, 0, 0.5, "least_squares", 2, 0.9)
                     for i in range(len(row)):
                         self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f},angle:{angle[i]/math.pi*180:.2f}","image", row[i],col[i]+20,"black",[],[])
-                        if(h!=None):
-                           region =  ha.gen_circle(row[i],col[i],10)
-                           color = self.get_color(region,h,row[i],col[i])
+                        if(v is not None):
+                           color = self.inspect_battery_defect(row[i], col[i], angle[i], s, v)
                            
                         tempPoints.append([1,color,row[i],col[i],angle[i]/math.pi*180])
                 if self.runData.modelId2!=None:
                     row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId2, 0, 1.57, 0.7, 0, 0.5, "least_squares", 2, 0.9)
                     for i in range(len(row)):
                         self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f},angle:{angle[i]/math.pi*180:.2f}","image", row[i],col[i]+20,"black",[],[])
-                        if(h!=None):
-                           region =  ha.gen_circle(row[i],col[i],10)
-                           color = self.get_color(region,h,row[i],col[i])
+                        if(v is not None):
+                           color = self.inspect_battery_defect(row[i], col[i], angle[i], s, v)
                         tempPoints.append([2,color,row[i],col[i],angle[i]/math.pi*180])
                 if self.runData.modelId3!=None:
                     row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId3, 0, 2.09, 0.9, 0, 0.5, "least_squares", 2, 0.9)
                     for i in range(len(row)):
                         self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f},angle:{angle[i]/math.pi*180:.2f}","image", row[i],col[i]+20,"black",[],[])
-                        if(h!=None):
-                           region =  ha.gen_circle(row[i],col[i],10)
-                           color = self.get_color(region,h,row[i],col[i])
+                        if(v is not None):
+                           color = self.inspect_battery_defect(row[i], col[i], angle[i], s, v)
                         tempPoints.append([3,color,row[i],col[i],angle[i]/math.pi*180])
                 if self.runData.modelId4!=None:
                     row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId4, 0, 1.04, 0.7, 0, 0.5, "least_squares", 2, 0.9)
                     for i in range(len(row)):
                         self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f},angle:{angle[i]/math.pi*180:.2f}","image", row[i],col[i]+20,"black",[],[])
-                        if(h!=None):
-                           region =  ha.gen_circle(row[i],col[i],10)
-                           color = self.get_color(region,h,row[i],col[i])
+                        if(v is not None):
+                           color = self.inspect_battery_defect(row[i], col[i], angle[i], s, v)
                         tempPoints.append([4,color,row[i],col[i],angle[i]/math.pi*180])
                 if self.runData.modelId5!=None:
                     row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId5, 0, 1.25, 0.7, 0, 0.5, "least_squares", 2, 0.9)
                     for i in range(len(row)):
                         self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f},angle:{angle[i]/math.pi*180:.2f}","image", row[i],col[i]+20,"black",[],[])
-                        if(h!=None):
-                           region =  ha.gen_circle(row[i],col[i],10)
-                           color = self.get_color(region,h,row[i],col[i])
+                        if(v is not None):
+                           color = self.inspect_battery_defect(row[i], col[i], angle[i], s, v)
                         tempPoints.append([5,color,row[i],col[i],angle[i]/math.pi*180])
             
                 return tempPoints
@@ -376,6 +376,65 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         filtered_points = [point for idx, point in enumerate(points) if idx not in to_remove]
 
         return filtered_points
+
+    def inspect_battery_defect(self, row, col, angle_rad, s_img, v_img):
+        """Detect battery end-cap defect (e.g. missing/abnormal cap).
+        Returns: 1=OK, 2=Defect, 3=Unknown.
+        The thresholds are reused from UI spin boxes:
+          - [Min1, Max1] => OK
+          - [Min2, Max2] => Defect
+          - else => Unknown
+        """
+        # ---- ROI sizing (from template ROI when creating shape model) ----
+        L1 = float(getattr(self.runData, 'battLen1', 200))
+        L2 = float(getattr(self.runData, 'battLen2', 80))
+        end_offset = L1 * float(getattr(self.runData, 'endOffsetRatio', 0.85))
+        cap_l1 = max(8.0, L1 * float(getattr(self.runData, 'capLenRatio', 0.18)))
+        cap_l2 = max(6.0, L2 * float(getattr(self.runData, 'capWidthRatio', 0.80)))
+
+        # ---- build 2 end ROIs (rectangle2) ----
+        dr = end_offset * math.sin(angle_rad)
+        dc = end_offset * math.cos(angle_rad)
+        r1, c1 = row + dr, col + dc
+        r2, c2 = row - dr, col - dc
+
+        reg1 = ha.gen_rectangle2(r1, c1, angle_rad, cap_l1, cap_l2)
+        reg2 = ha.gen_rectangle2(r2, c2, angle_rad, cap_l1, cap_l2)
+
+        mean1, _ = ha.intensity(reg1, v_img)
+        mean2, _ = ha.intensity(reg2, v_img)
+
+        # choose the brighter end as "cap candidate"
+        if mean1[0] >= mean2[0]:
+            reg_cap = reg1
+            v_cap = float(mean1[0])
+        else:
+            reg_cap = reg2
+            v_cap = float(mean2[0])
+
+        # optional: use Saturation to suppress highlights on non-metallic parts
+        score = v_cap
+        if s_img is not None:
+            s_mean, _ = ha.intensity(reg_cap, s_img)
+            score = v_cap - 0.5 * float(s_mean[0])
+
+        # draw ROI for debugging
+        try:
+            self.haWindow.disp_obj(reg_cap, "yellow", "margin")
+        except Exception:
+            pass
+
+        # ---- classify (reuse existing UI ranges) ----
+        if(score > self.spColorMin2.value() and score < self.spColorMax2.value()):
+            self.haWindow.disp_text(f"{self.leColorName2.text()},score:{score:.1f}", "image", row+20, col, "black", [], [])
+            return 2  # Defect
+        elif(score > self.spColorMin1.value() and score < self.spColorMax1.value()):
+            self.haWindow.disp_text(f"{self.leColorName1.text()},score:{score:.1f}", "image", row+20, col, "black", [], [])
+            return 1  # OK
+        else:
+            self.haWindow.disp_text(f"{self.leColorName3.text()},score:{score:.1f}", "image", row+20, col, "black", [], [])
+            return 3  # Unknown
+
     def get_color(self,region ,image,row,col):
         mean, _ = ha.intensity(region,image)
         if(mean[0]>self.spColorMin1.value() and mean[0]<self.spColorMax1.value()):
@@ -416,6 +475,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if len(regions) > 0:
             try:
                 roiParam=self.haWindow.get_rois_params()  
+                # save template ROI size for defect inspection
+                try:
+                    self.runData.battLen1 = roiParam[0].get('length1', self.runData.battLen1)
+                    self.runData.battLen2 = roiParam[0].get('length2', self.runData.battLen2)
+                except Exception:
+                    pass
                 region =ha.gen_rectangle2(roiParam[0]['row'],roiParam[0]['column'],roiParam[0]['phi'],roiParam[0]['length1'],roiParam[0]['length2'])  
                 _, rowCenter,colCenter=ha.area_center(region)         
                 modelImage=ha.reduce_domain(self.haWindow.h_image,region)

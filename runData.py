@@ -34,6 +34,13 @@ class runData():
         self.colorMin3=0
         self.colorMax3=255
 
+
+        # ===== Battery defect params (used for defect ROI sizing) =====
+        self.battLen1 = 200  # template rectangle length1 (half of battery length) in pixels
+        self.battLen2 = 80   # template rectangle length2 (half of battery width) in pixels
+        self.endOffsetRatio = 0.85
+        self.capLenRatio = 0.18
+        self.capWidthRatio = 0.80
     def to_dict(self):
         """Convert the object to a dictionary."""
         return {
@@ -53,6 +60,11 @@ class runData():
             "colorMax2": self.colorMax2,
             "colorMin3": self.colorMin3,
             "colorMax3": self.colorMax3,
+            "battLen1": self.battLen1,
+            "battLen2": self.battLen2,
+            "endOffsetRatio": self.endOffsetRatio,
+            "capLenRatio": self.capLenRatio,
+            "capWidthRatio": self.capWidthRatio,
         }
 
     @classmethod
@@ -77,6 +89,11 @@ class runData():
         instance.colorMax2 = data.get("colorMax2")
         instance.colorMin3 = data.get("colorMin3")
         instance.colorMax3 = data.get("colorMax3")
+        instance.battLen1 = data.get("battLen1", instance.battLen1)
+        instance.battLen2 = data.get("battLen2", instance.battLen2)
+        instance.endOffsetRatio = data.get("endOffsetRatio", instance.endOffsetRatio)
+        instance.capLenRatio = data.get("capLenRatio", instance.capLenRatio)
+        instance.capWidthRatio = data.get("capWidthRatio", instance.capWidthRatio)
         return instance
 
     def save(self, file_path):
