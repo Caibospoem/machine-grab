@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1096</width>
+    <width>1073</width>
     <height>898</height>
    </rect>
   </property>
@@ -80,13 +80,6 @@
          <string>定位设置</string>
         </property>
         <layout class="QGridLayout" name="gridLayout" columnstretch="1,1">
-         <item row="0" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>查找数量</string>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="1">
           <widget class="QPushButton" name="pbCreateModel">
            <property name="sizePolicy">
@@ -100,8 +93,12 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QSpinBox" name="spinBox"/>
+         <item row="4" column="1">
+          <widget class="QPushButton" name="pbCreateModel4">
+           <property name="text">
+            <string>创建模型4</string>
+           </property>
+          </widget>
          </item>
          <item row="2" column="1">
           <widget class="QPushButton" name="pbCreateModel2">
@@ -110,10 +107,27 @@
            </property>
           </widget>
          </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>查找数量</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QSpinBox" name="spinBox"/>
+         </item>
          <item row="3" column="1">
           <widget class="QPushButton" name="pbCreateModel3">
            <property name="text">
             <string>创建模型3</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QPushButton" name="pbCreateModel5">
+           <property name="text">
+            <string>创建模型5</string>
            </property>
           </widget>
          </item>
@@ -125,7 +139,7 @@
         <property name="title">
          <string>颜色设置</string>
         </property>
-        <layout class="QGridLayout" name="gridLayout_2" columnstretch="1,0,0,0,0,0">
+        <layout class="QGridLayout" name="gridLayout_2" columnstretch="1,0,0">
          <item row="5" column="0">
           <widget class="QLabel" name="label_10">
            <property name="text">

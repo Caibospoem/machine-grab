@@ -3,16 +3,21 @@ from PyQt5.QtWidgets import QMainWindow, QApplication
 from View.Ui_main_ui import Ui_MainWindow
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtCore import QThread
 import halcon as ha
 import math
 import modelData as md
 import runData as rd
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtCore import QThread
 from TCPServerThread import TCPServerWorker
 from calib import CalibWindow
 from cameraWorker import CameraWorker
 import os
+import numpy as np
+import snap7
+import struct
+from snap7.util import *
+from snap7.type import Areas
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -29,6 +34,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pbCreateModel.clicked.connect(self.on_createModel_clicked)
         self.pbCreateModel2.clicked.connect(self.on_createModel2_clicked)
         self.pbCreateModel3.clicked.connect(self.on_createModel3_clicked)
+        self.pbCreateModel4.clicked.connect(self.on_createModel4_clicked)   
+        self.pbCreateModel5.clicked.connect(self.on_createModel5_clicked)
         self.pbStartTcp.clicked.connect(self.on_startTcp_clicked)
         self.calibAction.triggered.connect(self.on_calib_clicked)
         self.haWindow.roiChanged.connect(self.on_roi_changed)
@@ -49,6 +56,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.cameraHandle = None
         self.camera_worker = None
         self.shapeId=1
+        self.plc_client=snap7.client.Client()
+        try:
+            self.plc_client.connect("192.168.0.1",0,1)
+            if self.plc_client.get_connected():
+                print("连接plc成功")
+            else:
+                print("连接plc失败")
+        except:
+            print("连接plc失败")
+        
 
     def on_save_clicked(self):
         if self.haWindow.h_image is not None:
@@ -60,7 +77,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self, "Warning", "No image to save.")
 
     def on_open_clicked(self):
-         self.cameraHandle = ha.open_framegrabber("MVision", 1, 1, 0, 0, 0, 0, "progressive", 8, "default", -1, "false", "auto", "GEV:DA7209084", 0, -1)
+         self.cameraHandle = ha.open_framegrabber("MVision", 1, 1, 0, 0, 0, 0, "progressive", 8, "default", -1, "false", "auto", "GEV:DA7209089 MV-CS050-60GC", 0, -1)
          self.pbOpen.setEnabled(False)
          self.cbReal.setEnabled(True)
          
@@ -161,17 +178,51 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.haWindow.update()
         rest = self.process()
         strrest = ""
-        for i in range(1):
-            row =rest[i][2]
-            col =rest[i][3]
-            id = rest[i][0]
-            y,x= ha.affine_trans_point_2d(self.modelData.matrix, row, col)
-            if(len(x)>0 and len(y)>0):
-                strrest = strrest + f"{rest[i][0]},{rest[i][1]},{x[0]:.2f},{y[0]:.2f},{rest[i][4]:.2f},"
-
-        if rest is not None:
+        if(command=="1"):
+            outPoints = self.remove_close_points_both(rest,400)
+            
+            for i in range(1):
+                if(len(outPoints)>=1 and outPoints[i][2]>229 and outPoints[i][2]<2004 and outPoints[i][3]>591 and outPoints[i][3]<1936):
+                    row =outPoints[i][2]
+                    col =outPoints[i][3]
+                    id = outPoints[i][0]
+                    y,x= ha.affine_trans_point_2d(self.modelData.matrix, row, col)
+                    if(len(x)>0 and len(y)>0):
+                        strrest = strrest + f"{outPoints[i][0]},{outPoints[i][1]},{x[0]:.2f},{y[0]:.2f},{outPoints[i][4]:.2f},"
+                        int_bytes = struct.pack("h",outPoints[i][1]) # 将整数打包为2字节的大端格式
+                        self.plc_client.write_area(Areas.MK,0,4,int_bytes)
+                        print(f"写入{outPoints[i][1]}")
+        elif(command=="2"):
+            for i in range(len(rest)):
+                if(rest[i][1]==2 and rest[i][2]>229 and rest[i][2]<2004 and rest[i][3]>591 and rest[i][3]<1936):
+                    row =rest[i][2]
+                    col =rest[i][3]
+                    id = rest[i][0]
+                    y,x= ha.affine_trans_point_2d(self.modelData.matrix, row, col)
+                    if(len(x)>0 and len(y)>0 ) :
+                        strrest = strrest + f"{rest[i][0]},{rest[i][1]},{x[0]:.2f},{y[0]:.2f},{rest[i][4]:.2f},"
+                        int_bytes = struct.pack("h",rest[i][1]) # 将整数打包为2字节的大端格式
+                        self.plc_client.write_area(Areas.MK,0,4,int_bytes)
+                        print(f"写入{rest[i][1]}")
+                        break
+        elif(command=="3"):
+            for i in range(len(rest)):
+                if(rest[i][1]==3 and rest[i][2]>229 and rest[i][2]<2004 and rest[i][3]>591 and rest[i][3]<1936):
+                    row =rest[i][2]
+                    col =rest[i][3]
+                    id = rest[i][0]
+                    y,x= ha.affine_trans_point_2d(self.modelData.matrix, row, col)
+                    if(len(x)>0 and len(y)>0  ):
+                        strrest = strrest + f"{rest[i][0]},{rest[i][1]},{x[0]:.2f},{y[0]:.2f},{rest[i][4]:.2f},"
+                        int_bytes = struct.pack("h",rest[i][1]) # 将整数打包为2字节的大端格式
+                        self.plc_client.write_area(Areas.MK,0,4,int_bytes)
+                        print(f"写入{rest[i][1]}")
+                        break
+        if strrest!="":
             print(strrest)
             self.tcp_worker.send_response(strrest)
+        else:
+            self.tcp_worker.send_response("0,0,0,0,0")
 
     def ensure_param_directory(self):
         """确保param文件夹存在"""
@@ -223,44 +274,128 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     r,g,b = ha.decompose3(self.haWindow.h_image)
                     h,s,v = ha.trans_from_rgb(r,g,b,"hsv")
                 if self.runData.modelId!=None:
-                    row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId, -0.39, 7, 0.5, 1, 0.5, "least_squares", 2, 0.9)
+                    row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId, -0.39, 7, 0.7, 0, 0.5, "least_squares", 2, 0.9)
                     for i in range(len(row)):
-                        self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f}","image", row[i],col[i]+20,"black",[],[])
+                        self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f},angle:{angle[i]/math.pi*180:.2f}","image", row[i],col[i]+20,"black",[],[])
                         if(h!=None):
                            region =  ha.gen_circle(row[i],col[i],10)
                            color = self.get_color(region,h,row[i],col[i])
                            
-                        tempPoints.append([0,color,row[i],col[i],angle[i]])
-                # if self.runData.modelId2!=None:
-                #     row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId2, -0.39, 7, 0.5, 0, 0.5, "least_squares", 2, 0.9)
-                #     for i in range(len(row)):
-                #         self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f}","image", row[i],col[i]+20,"black",[],[])
-                #         if(h!=None):
-                #            region =  ha.gen_circle(row[i],col[i],10)
-                #            color = self.get_color(region,h,row[i],col[i])
-                #         tempPoints.append([1,color,row[i],col[i],angle[i]])
-                # if self.runData.modelId3!=None:
-                #     row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId3, -0.39, 7, 0.5, 0, 0.5, "least_squares", 2, 0.9)
-                #     for i in range(len(row)):
-                #         self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f}","image", row[i],col[i]+20,"black",[],[])
-                #         if(h!=None):
-                #            region =  ha.gen_circle(row[i],col[i],10)
-                #            color = self.get_color(region,h,row[i],col[i])
-                #         tempPoints.append([2,color,row[i],col[i],angle[i]])
+                        tempPoints.append([1,color,row[i],col[i],angle[i]/math.pi*180])
+                if self.runData.modelId2!=None:
+                    row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId2, 0, 1.57, 0.7, 0, 0.5, "least_squares", 2, 0.9)
+                    for i in range(len(row)):
+                        self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f},angle:{angle[i]/math.pi*180:.2f}","image", row[i],col[i]+20,"black",[],[])
+                        if(h!=None):
+                           region =  ha.gen_circle(row[i],col[i],10)
+                           color = self.get_color(region,h,row[i],col[i])
+                        tempPoints.append([2,color,row[i],col[i],angle[i]/math.pi*180])
+                if self.runData.modelId3!=None:
+                    row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId3, 0, 2.09, 0.9, 0, 0.5, "least_squares", 2, 0.9)
+                    for i in range(len(row)):
+                        self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f},angle:{angle[i]/math.pi*180:.2f}","image", row[i],col[i]+20,"black",[],[])
+                        if(h!=None):
+                           region =  ha.gen_circle(row[i],col[i],10)
+                           color = self.get_color(region,h,row[i],col[i])
+                        tempPoints.append([3,color,row[i],col[i],angle[i]/math.pi*180])
+                if self.runData.modelId4!=None:
+                    row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId4, 0, 1.04, 0.7, 0, 0.5, "least_squares", 2, 0.9)
+                    for i in range(len(row)):
+                        self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f},angle:{angle[i]/math.pi*180:.2f}","image", row[i],col[i]+20,"black",[],[])
+                        if(h!=None):
+                           region =  ha.gen_circle(row[i],col[i],10)
+                           color = self.get_color(region,h,row[i],col[i])
+                        tempPoints.append([4,color,row[i],col[i],angle[i]/math.pi*180])
+                if self.runData.modelId5!=None:
+                    row,col,angle,score = ha.find_shape_model(self.haWindow.h_image, self.runData.modelId5, 0, 1.25, 0.7, 0, 0.5, "least_squares", 2, 0.9)
+                    for i in range(len(row)):
+                        self.haWindow.disp_text(f"row: {row[i]:.2f},col: {float(col[i]):.2f},angle:{angle[i]/math.pi*180:.2f}","image", row[i],col[i]+20,"black",[],[])
+                        if(h!=None):
+                           region =  ha.gen_circle(row[i],col[i],10)
+                           color = self.get_color(region,h,row[i],col[i])
+                        tempPoints.append([5,color,row[i],col[i],angle[i]/math.pi*180])
+            
                 return tempPoints
                     
+    # def filter_close_points(self,list_of_lists, distance_threshold):
+    #     """
+    #     过滤掉坐标距离过近的子列表。
+        
+    #     :param list_of_lists: 列表，每个元素是一个子列表，格式为 [0, 0, row, col, angl]
+    #     :param distance_threshold: 距离阈值，两点距离小于此值则视为过近
+    #     :return: 过滤后的列表，剔除了距离过近的点
+    #     """
+    #     filtered_lists = []  # 保存过滤后的完整子列表
+    #     filtered_coords = []  # 保存已保留点的坐标，用于快速距离计算
+        
+    #     for lst in list_of_lists:
+    #         # 提取当前点的坐标 (row, col)
+    #         current_coord = [lst[2], lst[3]]
+            
+    #         # 检查当前点是否与任何已保留点距离过近
+    #         too_close = False
+    #         for kept_coord in filtered_coords:
+    #             # 计算欧几里得距离
+    #             dist = np.linalg.norm(np.array(current_coord) - np.array(kept_coord))
+    #             if dist < distance_threshold:
+    #                 too_close = True
+    #                 break  # 只要与一个已保留点过近就跳出循环
+            
+    #         # 如果不过近，则保留该点及其坐标
+    #         if not too_close:
+    #             filtered_lists.append(lst)
+    #             filtered_coords.append(current_coord)
+        
+    #     return filtered_lists
 
+   
+    def remove_close_points_both(self, points, threshold):
+        """
+        剔除距离过近的点（将两个点都剔除）。
+
+        :param points: 包含 [0, 0, row, col, angle] 的列表
+        :param threshold: 距离阈值，如果两点之间的距离小于此值，则两个点都被剔除
+        :return: 剔除后的点列表
+        """
+        def euclidean_distance(p1, p2):
+            # 计算两点之间的欧几里得距离（基于 row 和 col）
+            return ((p1[2] - p2[2]) ** 2 + (p1[3] - p2[3]) ** 2) ** 0.5
+
+        # 标记需要剔除的点索引
+        to_remove = set()
+
+        # 遍历所有点对
+        for i in range(len(points)):
+            for j in range(i + 1, len(points)):
+                if euclidean_distance(points[i], points[j]) < threshold and euclidean_distance(points[i], points[j])>60:
+                    # 如果两点距离小于阈值，标记这两个点
+                    to_remove.add(i)
+                    to_remove.add(j)
+
+        # 生成剔除后的点列表
+        filtered_points = [point for idx, point in enumerate(points) if idx not in to_remove]
+
+        return filtered_points
     def get_color(self,region ,image,row,col):
         mean, _ = ha.intensity(region,image)
         if(mean[0]>self.spColorMin1.value() and mean[0]<self.spColorMax1.value()):
-            self.haWindow.disp_text(f"{self.leColorName1.text()},{mean[0]}","image", row+20,col,"black",[],[])
-            return 0 # 红色
+            self.haWindow.disp_text(f"{self.leColorName1.text()},{mean[0]:.2f}","image", row+20,col,"black",[],[])
+            #int_bytes = struct.pack('!h', 1)  # 将整数打包为2字节的大端格式
+            #self.plc_client.write_area(Areas.MK, 0, 4, int_bytes)
+            #print("写入1")
+            return 1 # 红色
         elif(mean[0]>self.spColorMin2.value() and mean[0]<self.spColorMax2.value()):
-            self.haWindow.disp_text(f"{self.leColorName2.text()},{mean[0]}","image", row+20,col,"black",[],[])
-            return 1 # 绿色
+            self.haWindow.disp_text(f"{self.leColorName2.text()},{mean[0]:.2f}","image", row+20,col,"black",[],[])
+            #int_bytes = struct.pack('!h', 2)  # 将整数打包为2字节的大端格式
+            #self.plc_client.write_area(Areas.MK, 0, 4, int_bytes)
+            #print("写入2")
+            return 2 # 绿色
         else:
-            self.haWindow.disp_text(f"{self.leColorName3.text()},{mean[0]}","image", row+20,col,"black",[],[])
-            return 2 # 蓝色
+            self.haWindow.disp_text(f"{self.leColorName3.text()},{mean[0]:.2f}","image", row+20,col,"black",[],[])
+            #int_bytes = struct.pack('!h', 3)  # 将整数打包为2字节的大端格式
+            #self.plc_client.write_area(Areas.MK, 0, 4, int_bytes)
+            #print("写入3")
+            return 3 # 蓝色
     def on_Read_clicked(self):
         # 打开文件对话框，选择图像文件
         file_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Image Files (*.png *.jpg *.bmp);;All Files (*)")
@@ -293,6 +428,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     self.runData.modelId2=modelId
                 elif(self.shapeId==3):
                     self.runData.modelId3=modelId
+                elif(self.shapeId==4):
+                    self.runData.modelId4=modelId
+                elif(self.shapeId==5):
+                    self.runData.modelId5=modelId
 
                 hom = ha.vector_angle_to_rigid(0, 0, 0, rowCenter, colCenter, 0)
                 self.runData.baseRow=rowCenter
@@ -320,6 +459,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.createFlg="shape"
         self.haWindow.clear()
         self.shapeId=3
+        self.haWindow.add_rectangle2(row=100, col=100, phi=0, length1=50, length2=50, color="red")
+    def on_createModel4_clicked(self):
+        self.createFlg="shape"
+        self.haWindow.clear()
+        self.shapeId=4
+        self.haWindow.add_rectangle2(row=100, col=100, phi=0, length1=50, length2=50, color="red")
+    def on_createModel5_clicked(self):
+        self.createFlg="shape"
+        self.haWindow.clear()
+        self.shapeId=5
         self.haWindow.add_rectangle2(row=100, col=100, phi=0, length1=50, length2=50, color="red")
 
     def on_findModel_clicked(self):

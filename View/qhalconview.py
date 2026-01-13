@@ -269,7 +269,7 @@ class QHalconView(QtWidgets.QWidget):
         self.h_window = ha.open_window(0, 0, w, h, win_id, "visible", "")
         
         # 更高质量的缩放可设 Interpolation（可选）
-        ha.set_system("clip_region", "true")
+        ha.set_system("clip_region", "false")
         
 
     def _apply_window_extents(self):

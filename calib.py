@@ -5,7 +5,8 @@ from View.Ui_calib_ui import Ui_calibWindow
 from PyQt5.QtWidgets import QWidget, QDialog,QFileDialog
 import halcon as ha
 import modelData as md
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QStandardItemModel, QStandardItem,QShowEvent
+
 class CalibWindow(QDialog, Ui_calibWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -64,6 +65,8 @@ class CalibWindow(QDialog, Ui_calibWindow):
             rows.sort(key=lambda x: x[1])
             for j in range(3):
                 self.ImagePoints.append(rows[j])
+    def showEvent(self, event: QShowEvent):
+        super().showEvent(event)
     def on_read_clicked(self):
         # Implement your custom logic here
         file_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Image Files (*.png *.jpg *.bmp);;All Files (*)")

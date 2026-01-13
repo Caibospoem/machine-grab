@@ -8,6 +8,8 @@ class runData():
         self.modelId = None 
         self.modelId2 = None
         self.modelId3 = None
+        self.modelId4 = None
+        self.modelId5 = None
         #找圆模型 
         self.lineId = None
         #转换矩阵
@@ -89,7 +91,10 @@ class runData():
             ha.write_shape_model(self.modelId2,"run_shape_model2.hmod")
         if(self.modelId3!=None):
             ha.write_shape_model(self.modelId3,"run_shape_model3.hmod")
-        
+        if(self.modelId4!=None):
+            ha.write_shape_model(self.modelId4,"run_shape_model4.hmod")
+        if(self.modelId5!=None):
+            ha.write_shape_model(self.modelId5,"run_shape_model5.hmod")
 
     @staticmethod
     def load(file_path):
@@ -106,4 +111,8 @@ class runData():
             modelData.modelId2 = ha.read_shape_model("run_shape_model2.hmod")
         if( ha.file_exists("run_shape_model3.hmod")):
             modelData.modelId3 = ha.read_shape_model("run_shape_model3.hmod")
+        if(ha.file_exists("run_shape_model4.hmod")):
+            modelData.modelId4=ha.read_shape_model("run_shape_model4.hmod")
+        if(ha.file_exists("run_shape_model5.hmod")):
+            modelData.modelId5=ha.read_shape_model("run_shape_model5.hmod")
         return modelData
