@@ -24,9 +24,9 @@ class runData():
         self.baseRow = None
         self.baseCol = None
 
-        self.colorName1="红色"
-        self.colorName2="绿色"
-        self.colorName3="蓝色"
+        self.colorName1="正常电池"
+        self.colorName2="缺陷电池"
+        self.colorName3="未知"
         self.colorMin1=0
         self.colorMax1=255
         self.colorMin2=0
@@ -41,6 +41,10 @@ class runData():
         self.endOffsetRatio = 0.85
         self.capLenRatio = 0.18
         self.capWidthRatio = 0.80
+        # ROI position/angle adjustment (for fine-tuning defect detection)
+        self.roiOffsetRowScale = 1.0  # scale factor for row offset (dr)
+        self.roiOffsetColScale = 1.0  # scale factor for col offset (dc)
+        self.roiAngleOffset = 0.0     # additional angle offset (radians) for ROI rotation
     def to_dict(self):
         """Convert the object to a dictionary."""
         return {
@@ -65,6 +69,9 @@ class runData():
             "endOffsetRatio": self.endOffsetRatio,
             "capLenRatio": self.capLenRatio,
             "capWidthRatio": self.capWidthRatio,
+            "roiOffsetRowScale": self.roiOffsetRowScale,
+            "roiOffsetColScale": self.roiOffsetColScale,
+            "roiAngleOffset": self.roiAngleOffset,
         }
 
     @classmethod
@@ -74,26 +81,29 @@ class runData():
         
         instance.baseRow = data.get("baseRow")
         instance.baseCol = data.get("baseCol")
-        instance.rowPoints = data.get("rowPoints")
-        instance.colPoints = data.get("colPoints")
-        instance.robotx = data.get("robotx")
-        instance.roboty = data.get("roboty")
-        if(len(instance.rowPoints)==9 and len(instance.colPoints)==9 and len(instance.robotx)==9 and len(instance.roboty)==9):
+        instance.rowPoints = data.get("rowPoints", [])
+        instance.colPoints = data.get("colPoints", [])
+        instance.robotx = data.get("robotx", [])
+        instance.roboty = data.get("roboty", [])
+        if(instance.rowPoints and len(instance.rowPoints)==9 and len(instance.colPoints)==9 and len(instance.robotx)==9 and len(instance.roboty)==9):
             instance.matrix = ha.vector_to_hom_mat2d(instance.rowPoints,instance.colPoints,instance.roboty,instance.robotx)
-        instance.colorName1 = data.get("colorName1")
-        instance.colorName2 = data.get("colorName2")
-        instance.colorName3 = data.get("colorName3")
-        instance.colorMin1 = data.get("colorMin1")
-        instance.colorMax1 = data.get("colorMax1")
-        instance.colorMin2 = data.get("colorMin2")
-        instance.colorMax2 = data.get("colorMax2")
-        instance.colorMin3 = data.get("colorMin3")
-        instance.colorMax3 = data.get("colorMax3")
+        instance.colorName1 = data.get("colorName1", instance.colorName1)
+        instance.colorName2 = data.get("colorName2", instance.colorName2)
+        instance.colorName3 = data.get("colorName3", instance.colorName3)
+        instance.colorMin1 = data.get("colorMin1", instance.colorMin1)
+        instance.colorMax1 = data.get("colorMax1", instance.colorMax1)
+        instance.colorMin2 = data.get("colorMin2", instance.colorMin2)
+        instance.colorMax2 = data.get("colorMax2", instance.colorMax2)
+        instance.colorMin3 = data.get("colorMin3", instance.colorMin3)
+        instance.colorMax3 = data.get("colorMax3", instance.colorMax3)
         instance.battLen1 = data.get("battLen1", instance.battLen1)
         instance.battLen2 = data.get("battLen2", instance.battLen2)
         instance.endOffsetRatio = data.get("endOffsetRatio", instance.endOffsetRatio)
         instance.capLenRatio = data.get("capLenRatio", instance.capLenRatio)
         instance.capWidthRatio = data.get("capWidthRatio", instance.capWidthRatio)
+        instance.roiOffsetRowScale = data.get("roiOffsetRowScale", instance.roiOffsetRowScale)
+        instance.roiOffsetColScale = data.get("roiOffsetColScale", instance.roiOffsetColScale)
+        instance.roiAngleOffset = data.get("roiAngleOffset", instance.roiAngleOffset)
         return instance
 
     def save(self, file_path):
@@ -115,7 +125,11 @@ class runData():
 
     @staticmethod
     def load(file_path):
-        if not ha.file_exists(file_path): return runData()
+        if not ha.file_exists(file_path): 
+            instance = runData()
+            # Save defaults on first creation
+            instance.save(file_path)
+            return instance
         """Deserialize the object from a JSON file."""
         with open(file_path, 'r') as file:
             modelData = runData.from_dict(json.load(file))

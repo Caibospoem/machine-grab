@@ -1,1 +1,29 @@
-{"baseRow": [1047.0], "baseCol": [1236.0], "rowPoints": [], "colPoints": [], "robotx": [], "roboty": [], "colorName1": "\u9ec4\u8272", "colorName2": "\u7ea2\u8272", "colorName3": "\u84dd\u8272", "colorMin1": 20, "colorMax1": 100, "colorMin2": 0, "colorMax2": 20, "colorMin3": 150, "colorMax3": 250}
+{
+    "baseRow": [
+        1047.0
+    ],
+    "baseCol": [
+        1236.0
+    ],
+    "rowPoints": [],
+    "colPoints": [],
+    "robotx": [],
+    "roboty": [],
+    "colorName1": "\u6b63\u5e38\u7535\u6c60",
+    "colorName2": "\u7f3a\u9677\u7535\u6c60",
+    "colorName3": "\u672a\u77e5",
+    "colorMin1": 20,
+    "colorMax1": 100,
+    "colorMin2": 0,
+    "colorMax2": 20,
+    "colorMin3": 150,
+    "colorMax3": 250,
+    "battLen1": 200,
+    "battLen2": 80,
+    "endOffsetRatio": 0.85,
+    "capLenRatio": 0.18,
+    "capWidthRatio": 0.8,
+    "roiOffsetRowScale": 1.0,
+    "roiOffsetColScale": 1.0,
+    "roiAngleOffset": 0.0
+}
